@@ -1,1 +1,15 @@
-venv
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+
+# Data and Outputs
+data/
+outputs/
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store

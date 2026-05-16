@@ -7,6 +7,9 @@ from bs4 import BeautifulSoup
 from polygon import RESTClient
 from datetime import datetime, timedelta
 import pytz
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def fetch_msft_earnings_dates(n=5):
     """
@@ -118,7 +121,7 @@ def fetch_minute_bars(ticker, start, end):
     
     aggs = client.get_aggs(
         ticker, 1, "minute", start_ms, end_ms,
-        adjusted=True, limit=50000, extended_hours=True
+        adjusted=True, limit=50000
     )
     
     df = pd.DataFrame(aggs)
@@ -141,7 +144,7 @@ def download_lm_dictionary(out_path='data/lm_dict.csv'):
     """
     Download Loughran-McDonald master dictionary.
     """
-    url = "https://drive.google.com/uc?export=download&id=1ptUgGLPp_yLxe2BqcyrqOFnY51eK6mYy"
+    url = "https://raw.githubusercontent.com/marcus-patterson/LoughranMcDonald_MasterDictionary/master/LoughranMcDonald_MasterDictionary_2018.csv"
     resp = requests.get(url)
     resp.raise_for_status()
     
