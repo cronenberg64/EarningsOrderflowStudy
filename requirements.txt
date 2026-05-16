@@ -1,0 +1,10 @@
+polygon-api-client
+yfinance
+requests
+beautifulsoup4
+pandas
+numpy
+scipy
+matplotlib
+pyarrow
+lxml
