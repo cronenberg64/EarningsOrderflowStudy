@@ -7,7 +7,6 @@ __pycache__/
 
 # Data and Outputs
 data/
-outputs/
 
 # IDEs
 .vscode/
