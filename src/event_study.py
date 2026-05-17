@@ -24,19 +24,22 @@ def build_event_panel(events_df: pd.DataFrame, bars_dir: str = 'data/bars/') -> 
         bars['t'] = pd.to_datetime(bars['t']).dt.tz_convert('UTC')
         t_event = pd.to_datetime(t_event).tz_convert('UTC')
         
+        # Apply a uniform -7 min shift to align t_event with the wire press release
+        t_event = t_event - pd.Timedelta(minutes=7)
+        
         bars['tau'] = ((bars['t'] - t_event).dt.total_seconds() / 60).round().astype(int)
         
-        # 2. Filter to window [-30, 90]
-        bars = bars[(bars['tau'] >= -30) & (bars['tau'] <= 90)].copy()
+        # 2. Filter to window [-20, 80] for complete cases across all events and to resolve tau=90 artifact
+        bars = bars[(bars['tau'] >= -20) & (bars['tau'] <= 80)].copy()
         
         # 3. Compute per-bar features
         bars['log_return'] = np.log(bars['close'] / bars['close'].shift(1)).fillna(0)
         bars['signed_vol'] = signed_volume(bars)
-        bars['cvd'] = cvd(bars, reset_at=bars[bars['tau'] == -30]['t'].min())
+        bars['cvd'] = cvd(bars, reset_at=bars[bars['tau'] == -20]['t'].min())
         bars['rv5'] = realized_vol_rolling(bars['log_return'], window=5)
         bars['spread'] = spread_proxy(bars)
         
-        # Cumulative return starting from tau=-30
+        # Cumulative return starting from tau=-20
         bars['cum_return'] = bars['log_return'].cumsum()
         
         # Add metadata

@@ -80,7 +80,8 @@ def fetch_8k_filing(announce_date, cik='0000789019'):
     
     exhibit_path = None
     for file in idx_data['directory']['item']:
-        if '99.1' in file['name'].lower() and file['name'].endswith(('.htm', '.html', '.txt')):
+        name_lower = file['name'].lower()
+        if any(x in name_lower for x in ['99.1', '99_1', 'ex99']) and name_lower.endswith(('.htm', '.html', '.txt')):
             exhibit_path = file['name']
             break
             
@@ -142,8 +143,34 @@ def fetch_minute_bars(ticker, start, end):
 
 def download_lm_dictionary(out_path='data/lm_dict.csv'):
     """
-    Download Loughran-McDonald master dictionary.
+    Download Loughran-McDonald master dictionary, or extract it from pysentiment2 if available.
     """
+    try:
+        import pysentiment2 as ps
+        import os
+        lm = ps.LM()
+        dict_file = getattr(lm, 'PATH', None)
+        if dict_file and os.path.exists(dict_file):
+            print(f"Extracting Loughran-McDonald dictionary from pysentiment2 static data: {dict_file}")
+            df = pd.read_csv(dict_file)
+            out_df = pd.DataFrame()
+            out_df['Word'] = df['Word']
+            out_df['Negative'] = df['Negative']
+            out_df['Positive'] = df['Positive']
+            out_df['Uncertainty'] = df['Uncertainty']
+            out_df['Litigious'] = df['Litigious']
+            # Map Modal values: 1 = Strong, 3 = Weak
+            out_df['Strong_Modal'] = (df['Modal'] == 1).astype(int) * 2009
+            out_df['Weak_Modal'] = (df['Modal'] == 3).astype(int) * 2009
+            
+            # Ensure target directory exists
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            out_df.to_csv(out_path, index=False)
+            return out_df
+    except Exception as e:
+        print(f"pysentiment2 extraction failed ({e}), falling back to direct URL...")
+        
+    # Fallback raw GitHub URL
     url = "https://raw.githubusercontent.com/marcus-patterson/LoughranMcDonald_MasterDictionary/master/LoughranMcDonald_MasterDictionary_2018.csv"
     resp = requests.get(url)
     resp.raise_for_status()
@@ -155,6 +182,5 @@ def download_lm_dictionary(out_path='data/lm_dict.csv'):
     cols = ['Word', 'Negative', 'Positive', 'Uncertainty', 'Litigious', 'Strong_Modal', 'Weak_Modal']
     df = df[cols]
     
-    # Categorize columns are often years or flags, ensure they are usable
-    # Usually non-zero means it belongs to the category
     return df
+
